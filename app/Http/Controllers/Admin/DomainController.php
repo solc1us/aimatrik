@@ -29,7 +29,10 @@ final class DomainController extends Controller
         $getAllDomain = $this->domainQueryService->getAllDomain();
 
         // Membuat next code
-        $nextCode = AppConst::CODE_NAME['domain'].'0'.(count($getAllDomain) + 1);
+        $nextNumber = count($getAllDomain) + 1;
+        do {
+            $nextCode = AppConst::CODE_NAME['domain'].'0'.$nextNumber++;
+        } while ($getAllDomain->contains('code', $nextCode));
 
         // Return view
         return view('admin.pages.domain.index', compact('getAllDomain', 'nextCode'));

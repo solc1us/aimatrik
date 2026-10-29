@@ -2,7 +2,7 @@
 @php
     $columns = 3;
     $total = count($getAllDomainQuestion);
-    $perColumn = ceil($total / $columns);
+    $perColumn = max(1, (int) ceil($total / $columns));
     $chunks = array_chunk($getAllDomainQuestion->sortBy('id')->values()->all(), $perColumn);
 @endphp
 

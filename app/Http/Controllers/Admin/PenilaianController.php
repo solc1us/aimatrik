@@ -52,6 +52,18 @@ final class PenilaianController extends Controller
             // Mendapatkan seluruh data pertanyaan (untuk kebutuhan tab)
             $getAllDomainQuestion = $this->penilaianQueryService->getAllQuestion(daftar_penilaian_id: $id_daftar_penilaian);
 
+            if ($getAllDomainQuestion->isEmpty()) {
+                DB::commit();
+
+                return view('admin.pages.penilaian.index', [
+                    'findDaftarPenilaian' => $findDaftarPenilaian,
+                    'getAllDomainQuestion' => $getAllDomainQuestion,
+                    'getAllQuestion' => $getAllDomainQuestion,
+                    'getQuestionById' => null,
+                    'getBidangKapabilitasById' => null,
+                ]);
+            }
+
             // Mengecek apakah ada request page ada, sekaligus mendefinisikan page yang akan diakses oleh user
             if (isset($request->page)) {
                 $getQuestionById = $this->penilaianQueryService->getQuestionById(daftar_penilaian_id: $id_daftar_penilaian, id: $request->page);
@@ -135,7 +147,7 @@ final class PenilaianController extends Controller
             }
 
             // Cari praktik
-            $findPraktik = $this->penilaianQueryService->findPraktikById(id: $request->idTarget);
+            $findPraktik = $this->penilaianQueryService->findPraktikById(id: $request->idTarget, daftarPenilaianId: $findDaftarPenilaian->id);
 
             // Cek apakah praktik ada
             if (! isset($findPraktik)) {
@@ -177,8 +189,12 @@ final class PenilaianController extends Controller
                 throw new Exception('Daftar Penilaian tidak ditemukan');
             }
 
+            if ($findDaftarPenilaian->is_publish) {
+                throw new Exception('Data Penilaian sudah dipublish, silahkan unpublish terlebih dahulu untuk melakukan perubahan');
+            }
+
             // Cari bidang praktik
-            $findBidangPraktik = $this->penilaianQueryService->findBidangPraktikById(id: $request->level);
+            $findBidangPraktik = $this->penilaianQueryService->findBidangPraktikById(id: $request->level, daftarPenilaianId: $findDaftarPenilaian->id);
 
             // Cek apakah bidang praktik ada
             if (! isset($findBidangPraktik)) {
@@ -212,8 +228,12 @@ final class PenilaianController extends Controller
                 throw new Exception('Daftar Penilaian tidak ditemukan');
             }
 
+            if ($findDaftarPenilaian->is_publish) {
+                throw new Exception('Data Penilaian sudah dipublish, silahkan unpublish terlebih dahulu untuk melakukan perubahan');
+            }
+
             // Cari praktik
-            $findPraktik = $this->penilaianQueryService->findPraktikById(id: $request->idTarget);
+            $findPraktik = $this->penilaianQueryService->findPraktikById(id: $request->idTarget, daftarPenilaianId: $findDaftarPenilaian->id);
 
             // Cek apakah praktik ada
             if (! isset($findPraktik)) {
@@ -256,6 +276,10 @@ final class PenilaianController extends Controller
                 throw new Exception('Daftar Penilaian tidak ditemukan');
             }
 
+            if ($findDaftarPenilaian->is_publish) {
+                throw new Exception('Data Penilaian sudah dipublish, silahkan unpublish terlebih dahulu untuk melakukan perubahan');
+            }
+
             // Cek apakah ada data request pelaksanaan atau request pelaksanaan ada yang kosong
             if (! isset($request->pelaksanaan) || empty(array_filter($request->pelaksanaan, fn ($group) => array_filter($group)))) {
                 throw new Exception('Mohon isi setidaknya satu data pelaksanaan');
@@ -264,7 +288,7 @@ final class PenilaianController extends Controller
             // Melakukan foreach data pelaksanaan
             foreach ($request->pelaksanaan as $indexBidangPraktik => $bidangPraktik) {
                 // Cari bidang praktik berdasarkan index dari data pelaksanaan
-                $findBidangPraktik = $this->penilaianQueryService->findBidangPraktikById(id: $indexBidangPraktik);
+                $findBidangPraktik = $this->penilaianQueryService->findBidangPraktikById(id: $indexBidangPraktik, daftarPenilaianId: $findDaftarPenilaian->id);
 
                 // Cek apakah ada atau tidak
                 if (! isset($findBidangPraktik)) {
@@ -297,7 +321,7 @@ final class PenilaianController extends Controller
                     // Looping data jawaban
                     foreach ($valueData as $indexItemData => $valueItemData) {
                         // Cari bidang praktik
-                        $findPraktik = $this->penilaianQueryService->findPraktikById(id: $indexItemData);
+                        $findPraktik = $findBidangPraktik->questionAnswerPraktik()->whereKey($indexItemData)->first();
 
                         // Cek apakah ada atau tidak
                         if (! isset($findPraktik)) {

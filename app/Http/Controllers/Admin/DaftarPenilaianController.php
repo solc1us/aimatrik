@@ -80,6 +80,10 @@ final class DaftarPenilaianController extends Controller
                 throw new Exception(trans('response.error.update', ['data' => 'Daftar Penilaian', 'error' => 'data tidak ditemukan']));
             }
 
+            if ($daftarPenilaian->is_publish) {
+                throw new Exception('Data Penilaian sudah dipublish, silahkan unpublish terlebih dahulu untuk melakukan perubahan');
+            }
+
             // Ubah daftar penilaian
             $this->daftarPenilaianCommandService->updateDaftarPenilaian(request: $request, daftarPenilaian: $daftarPenilaian);
             DB::commit();
@@ -103,6 +107,10 @@ final class DaftarPenilaianController extends Controller
             // Cek apakah daftar penilaian ada
             if (! isset($daftarPenilaian)) {
                 throw new Exception(trans('response.error.delete', ['data' => 'Daftar Penilaian', 'error' => 'data tidak ditemukan']));
+            }
+
+            if ($daftarPenilaian->is_publish) {
+                throw new Exception('Data Penilaian sudah dipublish, silahkan unpublish terlebih dahulu untuk melakukan perubahan');
             }
 
             // Cek apakah daftar penilaian masih aktif
@@ -134,6 +142,10 @@ final class DaftarPenilaianController extends Controller
             // Cek apakah daftar penilaian ada
             if (! isset($daftarPenilaian)) {
                 throw new Exception(trans('response.error.update', ['data' => 'Daftar Penilaian', 'error' => 'data tidak ditemukan']));
+            }
+
+            if ($daftarPenilaian->is_publish) {
+                throw new Exception('Data Penilaian sudah dipublish, silahkan unpublish terlebih dahulu untuk melakukan perubahan');
             }
 
             // Ubah daftar penilaian

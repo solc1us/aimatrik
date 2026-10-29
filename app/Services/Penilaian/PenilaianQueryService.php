@@ -67,19 +67,25 @@ class PenilaianQueryService
         return $query->first();
     }
 
-    public function findBidangPraktikById(string $id): ?QuestionAnswerBidPraktik
+    public function findBidangPraktikById(string $id, string $daftarPenilaianId): ?QuestionAnswerBidPraktik
     {
         $query = QuestionAnswerBidPraktik::query();
         $query->where('id', $id);
+        $query->whereHas('questionAnswerBidKapabilitas.daftarPenilaianQuestion', function ($q) use ($daftarPenilaianId) {
+            $q->where('daftar_penilaian_id', $daftarPenilaianId);
+        });
         $query->orderBy('id', 'ASC');
 
         return $query->first();
     }
 
-    public function findPraktikById(string $id): ?QuestionAnswerPraktik
+    public function findPraktikById(string $id, string $daftarPenilaianId): ?QuestionAnswerPraktik
     {
         $query = QuestionAnswerPraktik::query();
         $query->where('id', $id);
+        $query->whereHas('questionAnswerBidPraktik.questionAnswerBidKapabilitas.daftarPenilaianQuestion', function ($q) use ($daftarPenilaianId) {
+            $q->where('daftar_penilaian_id', $daftarPenilaianId);
+        });
         $query->orderBy('id', 'ASC');
 
         return $query->first();
