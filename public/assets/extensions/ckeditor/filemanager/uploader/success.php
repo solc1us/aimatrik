@@ -1,3 +1,4 @@
+<?php require __DIR__.'/../config/config.php'; ?>
 <html>
 <head>
 	<!--JUPLOAD_JSCRIPT-->

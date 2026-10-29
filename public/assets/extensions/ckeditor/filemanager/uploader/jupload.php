@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__.'/../config/config.php';
+
 /**
  * This class manage upload, with use of the JUpload applet. It's both a sample to show how to use the applet, and
  * a class you can use directly into your own application.

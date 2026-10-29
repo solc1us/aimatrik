@@ -18,7 +18,7 @@
                         secara sistematis, terukur, dan berkelanjutan.
                     </p>
 
-                    <a href="https://bit.ly/DetailPraktikAIGOVHEI"
+                    <a href="https://drive.google.com/file/d/1U-gwoTVGn5JiPgcNW4IUh0LsTa_R7Zg4/view?usp=sharing"
                        target="_blank"
                        rel="noopener noreferrer"
                        class="aim-practice-link">

@@ -3,10 +3,7 @@
     $('.editor-textarea').each(function(e) {
         CKEDITOR.replace(this.id, {
             toolbar: 'BasicImage',
-            height: 250,
-            filebrowserBrowseUrl: '{{ url('assets/extensions/ckeditor') }}/filemanager/dialog.php?type=2&editor=ckeditor&akey={{ md5('ahbhagcchw') }}&fldr=',
-            filebrowserUploadUrl: '{{ url('assets/extensions/ckeditor') }}/filemanager/dialog.php?type=2&editor=ckeditor&akey={{ md5('ahbhagcchw') }}&fldr=',
-            filebrowserImageBrowseUrl: '{{ url('assets/extensions/ckeditor') }}/filemanager/dialog.php?type=1&editor=ckeditor&akey={{ md5('ahbhagcchw') }}&fldr='
+            height: 250
         });
     });
 

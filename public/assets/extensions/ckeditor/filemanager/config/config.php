@@ -1,5 +1,9 @@
 <?php
 
+// Unused legacy file manager: deny access before starting its independent session.
+http_response_code(404);
+exit;
+
 if (session_id() == '') {
     session_start();
 }
@@ -37,7 +41,7 @@ define('USE_ACCESS_KEYS', true); // TRUE or FALSE
 |--------------------------------------------------------------------------
 */
 
-define('DEBUG_ERROR_MESSAGE', true); // TRUE or FALSE
+define('DEBUG_ERROR_MESSAGE', false); // TRUE or FALSE
 
 /*
 |--------------------------------------------------------------------------
@@ -140,7 +144,7 @@ $config = [
     |
     */
 
-    'access_keys' => [md5('ahbhagcchw')],
+    'access_keys' => [],
 
     // --------------------------------------------------------------------------------------------------------
     // YOU CAN COPY AND CHANGE THESE VARIABLES INTO FOLDERS config.php FILES TO CUSTOMIZE EACH FOLDER OPTIONS
