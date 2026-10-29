@@ -8,7 +8,7 @@
             <div id="auth-left">
                 <div class="auth-logo">
                     <a href="{{ route('login') }}">
-                        <img src="{{ asset('assets/images/logo/logo-default.png') }}" alt="Logo" class="img-fluid" />
+                        <img src="{{ asset('assets/images/logo/logo2.png') }}" alt="AIMATRIK" class="img-fluid" />
                     </a>
                 </div>
                 <h1 class="auth-title">Reset Password</h1>

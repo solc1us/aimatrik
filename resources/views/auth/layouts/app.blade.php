@@ -9,7 +9,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex, nofollow">
 
-    <title>{{ config('app.name', 'Laravel') }} - @yield('title')</title>
+    <title>AIMATRIK - @yield('title')</title>
 
     @include('auth.layouts._css')
     @yield('customJs')

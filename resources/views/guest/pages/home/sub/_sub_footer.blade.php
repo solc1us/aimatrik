@@ -22,9 +22,8 @@
                     </li>
                     <li>
                         <span>WEBSITE</span>
-                        <a href="https://govaihei.rudaya.id"
-                           target="_blank" rel="noopener noreferrer">
-                            Aimatrik.rudaya.id
+                        <a href="{{ route('guest.index') }}">
+                            AIMATRIK
                         </a>
                     </li>
                     <li>

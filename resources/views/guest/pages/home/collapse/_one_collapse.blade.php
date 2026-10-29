@@ -17,7 +17,7 @@
                     <li>Pengelolaan data akademik (mahasiswa, dosen, kurikulum, riset,
                         administrasi)</li>
                     <li>Menjaga keamanan, akurasi, dan kualitas data</li>
-                    <li>Mendorong interoperabilitas sistem akademik untuk GOVAIHEI</li>
+                    <li>Mendorong interoperabilitas sistem akademik untuk AIMATRIK</li>
                     <li>Menyediakan data yang terpercaya untuk pengambilan keputusan berbasis
                         AI.</li>
                 </ul>

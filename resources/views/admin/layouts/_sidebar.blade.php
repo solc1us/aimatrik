@@ -4,7 +4,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div class="logo">
                     <a href="">
-                        <img src="{{ asset('assets/images/logo/logo2.png') }}" alt="Logo"
+                        <img src="{{ asset('assets/images/logo/logo2.png') }}" alt="AIMATRIK"
                             class="img-fluid img-responsive" srcset="" />
                     </a>
                 </div>
