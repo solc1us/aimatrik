@@ -25,23 +25,10 @@
                         <span>MODEL STRUCTURE / 01</span>
                     </div>
 
-                    <div class="aim-model-diagram" role="group" aria-label="Struktur model AIMATRIK dengan 6 domain">
-                        <h3 class="aim-model-label">6 Domain</h3>
-                        <ul class="aim-model-domains">
-                            <li>Data &amp; Informasi</li>
-                            <li>Teknologi dan Infrastruktur</li>
-                            <li>Etika dan Sosial</li>
-                            <li>Regulasi dan Kepatuhan</li>
-                            <li>Monitoring &amp; Evaluasi</li>
-                            <li>Keberlanjutan (SA)</li>
-                        </ul>
-                        <ol class="aim-model-hierarchy">
-                            <li>Bidang Kapabilitas</li>
-                            <li>Bidang Praktik</li>
-                            <li>Level Praktik</li>
-                            <li>Praktik</li>
-                        </ol>
-                    </div>
+                    <img
+                        src="{{ asset('assets/images/logo/asset-model.png') }}"
+                        alt="Diagram struktur model AIMATRIK"
+                        loading="lazy">
 
                     <div class="aim-image-caption">
                         <span>AI GOVERNANCE FRAMEWORK</span>
@@ -174,56 +161,6 @@
         background: #f7f8fa;
         border: 1px solid rgba(255,255,255,.12);
         border-radius: 12px;
-    }
-
-    .aim-model-diagram {
-        padding: 16px 0;
-        text-align: center;
-    }
-
-    .aim-model-label {
-        color: var(--aim-red);
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .aim-model-domains,
-    .aim-model-hierarchy {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .aim-model-domains {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .aim-model-domains li,
-    .aim-model-hierarchy li {
-        padding: 14px 10px;
-        border: 1px solid #e3e6ea;
-        border-radius: 8px;
-        background: #f7f8fa;
-    }
-
-    .aim-model-domains li:last-child {
-        color: var(--aim-red);
-        border-color: var(--aim-red);
-    }
-
-    .aim-model-hierarchy li::before {
-        content: '↓';
-        display: block;
-        color: var(--aim-red);
-        margin-bottom: 8px;
-    }
-
-    .aim-model-hierarchy li {
-        margin-top: 8px;
     }
 
     .aim-image-topline,
