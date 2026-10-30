@@ -1,7 +1,7 @@
 @forelse ($itemQuestion->questionAnswerBidKapabilitas->sortBy('id')->values() as $itemQuestionAnswerBidKapabilitas)
     <div class="col-12">
-        <div class="accordion" id="cardAccordion">
-            <div class="accordion" id="accordionSection-{{ $itemQuestion->id }}">
+        <div class="accordion">
+            <div class="accordion" id="accordionSection-{{ $itemQuestionAnswerBidKapabilitas->id }}">
                 @foreach ($itemQuestionAnswerBidKapabilitas->questionAnswerBidPraktik->sortBy('id')->values() as $indexItemQuestionAnswerBidPraktik => $itemQuestionAnswerBidPraktik)
                     @include('admin.pages.penilaian.question._accordion')
                 @endforeach

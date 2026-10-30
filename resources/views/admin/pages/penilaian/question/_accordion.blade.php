@@ -8,7 +8,7 @@
     </h2>
     <div id="collapse{{ $itemQuestionAnswerBidPraktik->id }}" class="accordion-collapse collapse"
         aria-labelledby="heading{{ $itemQuestionAnswerBidPraktik->id }}"
-        data-bs-parent="#accordionSection-{{ $itemQuestionAnswerBidPraktik->id }}">
+        data-bs-parent="#accordionSection-{{ $itemQuestionAnswerBidKapabilitas->id }}">
         <div class="accordion-body">
             @include('admin.pages.penilaian.question._praktik_item')
         </div>
