@@ -329,26 +329,28 @@ for (const switchInput of switchInputs) {
 
 
 //Text Animation
-let splitTextLines = gsap.utils.toArray(".text-anim");
+if (typeof gsap !== "undefined" && typeof SplitText !== "undefined") {
+  let splitTextLines = gsap.utils.toArray(".text-anim");
 
-splitTextLines.forEach(splitTextLine => {
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: splitTextLine,
-      start: 'top 90%',
-      duration: 2,
-      end: 'bottom 60%',
-      scrub: false,
-      markers: false,
-      toggleActions: 'play none none none'
-    }
+  splitTextLines.forEach(splitTextLine => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: splitTextLine,
+        start: 'top 90%',
+        duration: 2,
+        end: 'bottom 60%',
+        scrub: false,
+        markers: false,
+        toggleActions: 'play none none none'
+      }
+    });
+
+    const itemSplitted = new SplitText(splitTextLine, { type: "lines" });
+    gsap.set(splitTextLine, { perspective: 400 });
+    itemSplitted.split({ type: "lines" })
+    tl.from(itemSplitted.lines, { duration: .9, delay: 0.2, opacity: 0, rotationX: -80, force3D: true, transformOrigin: "top center -50", stagger: 0.1 });
   });
-
-  const itemSplitted = new SplitText(splitTextLine, { type: "lines" });
-  gsap.set(splitTextLine, { perspective: 400 });
-  itemSplitted.split({ type: "lines" })
-  tl.from(itemSplitted.lines, { duration: .9, delay: 0.2, opacity: 0, rotationX: -80, force3D: true, transformOrigin: "top center -50", stagger: 0.1 });
-});
+}
 
 
 
