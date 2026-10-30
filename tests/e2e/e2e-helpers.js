@@ -59,8 +59,22 @@ export async function notice(page, title = 'Berhasil!') {
 
 export async function choose(page, select, label) {
     // Select2 hides its native select. Use the visible widget, without force/JS changes.
-    await select.locator('..').locator('.select2-selection').click();
-    await page.getByRole('option', { name: label, exact: true }).click();
+    const nativeOption = select.getByText(label, { exact: true });
+    await expect(nativeOption).toHaveCount(1);
+    const value = await nativeOption.getAttribute('value');
+    expect(value).not.toBeNull();
+    const widget = select.locator('..').locator('.select2-selection');
+    await widget.click();
+    await expect(widget).toHaveAttribute('aria-expanded', 'true');
+    const dropdown = page.locator('.select2-container--open .select2-dropdown');
+    await expect(dropdown).toHaveCount(1);
+    await expect(dropdown).toBeVisible();
+    // This bundled Select2 uses treeitem roles. Match visible text in its active dropdown.
+    const option = dropdown.getByText(label, { exact: true });
+    await expect(option).toBeVisible();
+    await option.click();
+    await expect(select).toHaveValue(value);
+    await expect(widget).toHaveAttribute('aria-expanded', 'false');
 }
 
 export async function saveModal(page, selector, values) {

@@ -168,6 +168,7 @@ try {
         $manifest['case'] = $case;
         $manifest['name'] = $name;
         $manifest['dummyDomain'] = Domain::where('code', $prefix.'-'.$case)->value('id');
+        $manifest['dummyDomains'] = Domain::where('code', $prefix.'-'.$case)->get(['id', 'code', 'name', 'is_active'])->all();
         foreach (['a', 'b'] as $role) {
             $assessment = $owned()->where('name', $name.' '.strtoupper($role))->where('user_id', $manifest['users'][$role])->first();
             $fields = $assessment ? QuestionAnswerBidPraktik::whereHas('questionAnswerBidKapabilitas.daftarPenilaianQuestion', fn ($q) => $q->where('daftar_penilaian_id', $assessment->id))->get() : collect();

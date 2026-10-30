@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { prepare, login, master, saveModal, notice, removeRow, choose } from './e2e-helpers.js';
+import { prepare, fixture, login, master, saveModal, notice, removeRow, choose } from './e2e-helpers.js';
 
 let f;
 test.beforeEach(async ({ page, baseURL }, info) => {
@@ -36,13 +36,25 @@ test('BB-08 - Domain dummy dapat dibuat, diedit, ditoggle dan dihapus; duplikat 
     await row.locator('[title="Ubah Data"]').click();
     await saveModal(page, edit, { code, name: `${f.name} Updated` });
     await expect(row).toContainText(`${f.name} Updated`);
+    const beforeDuplicate = fixture('inspect', 'BB-08').dummyDomains;
+    expect(beforeDuplicate).toHaveLength(1);
 
     await page.locator('[data-bs-target="#modalCreateDomain"]').click();
     const modal = page.locator('.modal#modalCreateDomain');
     await modal.locator('[name="code"]').fill(code);
     await modal.locator('[name="name"]').fill(`${f.name} Duplicate`);
-    await modal.locator('button[type="submit"]').click();
-    await expect(page.locator('.alert-danger')).toBeVisible();
+    const [duplicate] = await Promise.all([
+        page.waitForResponse(response => response.request().method() === 'POST'
+            && new URL(response.url()).pathname === `${master}/store`),
+        page.waitForEvent('domcontentloaded'),
+        modal.locator('button[type="submit"]').click(),
+    ]);
+    expect(duplicate.status()).toBe(302);
+    expect(new URL(duplicate.headers().location, page.url()).pathname).toBe(master);
+    const validation = page.locator('.alert-danger');
+    await expect(validation).toBeVisible();
+    await expect(validation).toContainText(/(?:code|kode).*(?:sudah|telah|digunakan|already|taken)/i);
+    expect(fixture('inspect', 'BB-08').dummyDomains).toEqual(beforeDuplicate);
     await expect(row).toHaveCount(1);
     await expect(page.locator('#dataTable')).not.toContainText(`${f.name} Duplicate`);
 
