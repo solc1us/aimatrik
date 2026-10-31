@@ -1,6 +1,6 @@
 # AIMATRIK — Public Black-box Test Cases
 
-Seluruh skenario berstatus **NOT RUN**. Fase implementasi ini hanya melakukan validasi statis; browser dan E2E test belum dijalankan.
+Phase 3 berstatus **NOT RUN**: hanya validasi statis pada implementasi ini. Pengguna melaporkan full suite Phase 2 **11 PASS, 0 FAIL, 0 SKIP (3 menit)**. Status Phase 1 dipertahankan sesuai pencatatan sebelumnya.
 
 | ID | Test Case | Preconditions | Steps | Expected Result | Actual Result | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,7 +37,7 @@ Catat hasil aktual setelah eksekusi: PASS/FAIL/SKIP, alasan skip, dan lokasi art
 
 ## Phase 2 — Admin dan assessment
 
-Config Phase 1 tetap memilih `public.spec.js` dan `auth.spec.js`. Config Phase 2 terpisah memilih dua spec berikut. Semua kasus baru **NOT RUN**; fixture, migrasi, server dan browser tidak dijalankan pada fase implementasi.
+Config Phase 1 tetap memilih `public.spec.js` dan `auth.spec.js`. Config Phase 2 terpisah memilih dua spec berikut. Hasil Phase 2 berasal dari laporan full suite pengguna: **11 PASS, 0 FAIL, 0 SKIP (3 menit)**; suite tidak dijalankan ulang pada implementasi Phase 3.
 
 Phase 2 memakai satu worker, nol retry, dan batas 120 detik per kasus karena CRUD hierarki mencakup beberapa form/navigasi; assertion tetap memakai auto-waiting Playwright.
 
@@ -45,15 +45,15 @@ Evidence kegagalan Phase 2 berada di `node_modules/.cache/playwright-phase2-resu
 
 | ID | Test Case | Preconditions | Steps | Expected Result | Actual Result | Status | Evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| BB-07 | Role authorization | Guard E2E lolos; fixture Super Admin dan Admin A siap | Guest membuka master data; Super Admin membuka domain dan seluruh level hierarki; Admin A membuka URL yang sama | Guest menuju login; Super Admin HTTP 200; Admin A HTTP 403 pada setiap level | Belum dijalankan | NOT RUN | `admin.spec.js`: BB-07 |
-| BB-08 | Domain CRUD | Super Admin E2E; domain dummy kasus ini belum ada | Buat domain inactive; edit; coba kode duplikat; toggle aktif/nonaktif; hapus lewat konfirmasi UI | Satu record tampil; edit tersimpan; duplikat ditolak; status berubah; dummy hilang | Belum dijalankan | NOT RUN | `admin.spec.js`: BB-08 |
-| BB-09 | Hierarchy CRUD | Domain dummy inactive khusus BB-09 | Lewati navigasi parent; buat/edit/hapus satu kapabilitas, bidang praktik, dan praktik inactive; periksa hidden parent IDs dan kunjungi ulang level parent | Parent-child sesuai; perubahan tampil pada parent yang benar; penghapusan dari level terbawah berhasil | Belum dijalankan | NOT RUN | `admin.spec.js`: BB-09 |
-| BB-10 | Create assessment | Admin A dan satu hierarki dasar aktif E2E | Buat assessment lewat modal; refresh daftar; buka assessment; definisikan target untuk menampilkan dua praktik | Assessment muncul pada akun A; satu bidang dan dua praktik terkloning; tampilan tetap tersedia setelah refresh | Belum dijalankan | NOT RUN | `assessment.spec.js`: BB-10 |
-| BB-11 | Answers and target | Draft milik A, target belum ditentukan | Buka bidang; pilih target level 0 melalui Select2; isi dua praktik level 0; simpan; refresh | Target 0 dan jawaban F tersimpan pada UI dan record fixture | Belum dijalankan | NOT RUN | `assessment.spec.js`: BB-11 |
-| BB-12 | Supporting files | Draft A dengan target/jawaban baseline; PDF dummy dari setup | Upload PDF melalui form; preview daftar dan GET PDF; hapus; upload teks dummy berekstensi exe | PDF termuat; hapus menghilangkan record/file; invalid tidak tersimpan pada record maupun disk testing | Belum dijalankan | NOT RUN | `assessment.spec.js`: BB-12 |
-| BB-13 | Publish/unpublish | Draft A baseline | Publish UI; periksa disabled/absent controls; kirim mutasi langsung jawaban/upload, target, delete file dan metadata; bandingkan snapshot; unpublish; edit/simpan/refresh | Published tidak berubah; penolakan bukan karena CSRF; unpublish mengaktifkan edit dan jawaban N tersimpan | Belum dijalankan | NOT RUN | `assessment.spec.js`: BB-13 |
-| BB-14 | Assessment ownership | A/B masing-masing memiliki assessment; B memiliki sentinel PDF | B memverifikasi data awal; A membuka URL B lalu memalsukan assessment/field/practice IDs untuk load/delete/upload/jawaban/target lewat HTTP Laravel; bandingkan snapshot B; login B kembali | A ditolak; isi jawaban, target, metadata dan hash/daftar file B tetap sama | Belum dijalankan | NOT RUN | `assessment.spec.js`: BB-14 |
-| BB-16 | Empty assessment | Assessment A tanpa pertanyaan, dibuat oleh fixture | Buka URL; periksa empty state; kembali ke daftar; buka lagi | HTTP 200; empty state; tanpa form jawaban; navigasi tidak error | Belum dijalankan | NOT RUN | `assessment.spec.js`: BB-16 |
+| BB-07 | Role authorization | Guard E2E lolos; fixture Super Admin dan Admin A siap | Guest membuka master data; Super Admin membuka domain dan seluruh level hierarki; Admin A membuka URL yang sama | Guest menuju login; Super Admin HTTP 200; Admin A HTTP 403 pada setiap level | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `admin.spec.js`: BB-07; berdasarkan laporan pengguna |
+| BB-08 | Domain CRUD | Super Admin E2E; domain dummy kasus ini belum ada | Buat domain inactive; edit; coba kode duplikat; toggle aktif/nonaktif; hapus lewat konfirmasi UI | Satu record tampil; edit tersimpan; duplikat ditolak; status berubah; dummy hilang | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `admin.spec.js`: BB-08; berdasarkan laporan pengguna |
+| BB-09 | Hierarchy CRUD | Domain dummy inactive khusus BB-09 | Lewati navigasi parent; buat/edit/hapus satu kapabilitas, bidang praktik, dan praktik inactive; periksa hidden parent IDs dan kunjungi ulang level parent | Parent-child sesuai; perubahan tampil pada parent yang benar; penghapusan dari level terbawah berhasil | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `admin.spec.js`: BB-09; berdasarkan laporan pengguna |
+| BB-10 | Create assessment | Admin A dan satu hierarki dasar aktif E2E | Buat assessment lewat modal; refresh daftar; buka assessment; definisikan target untuk menampilkan dua praktik | Assessment muncul pada akun A; satu bidang dan dua praktik terkloning; tampilan tetap tersedia setelah refresh | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `assessment.spec.js`: BB-10; berdasarkan laporan pengguna |
+| BB-11 | Answers and target | Draft milik A, target belum ditentukan | Buka bidang; pilih target level 0 melalui Select2; isi dua praktik level 0; simpan; refresh | Target 0 dan jawaban F tersimpan pada UI dan record fixture | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `assessment.spec.js`: BB-11; berdasarkan laporan pengguna |
+| BB-12 | Supporting files | Draft A dengan target/jawaban baseline; PDF dummy dari setup | Upload PDF melalui form; preview daftar dan GET PDF; hapus; upload teks dummy berekstensi exe | PDF termuat; hapus menghilangkan record/file; invalid tidak tersimpan pada record maupun disk testing | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `assessment.spec.js`: BB-12; berdasarkan laporan pengguna |
+| BB-13 | Publish/unpublish | Draft A baseline | Publish UI; periksa disabled/absent controls; kirim mutasi langsung jawaban/upload, target, delete file dan metadata; bandingkan snapshot; unpublish; edit/simpan/refresh | Published tidak berubah; penolakan bukan karena CSRF; unpublish mengaktifkan edit dan jawaban N tersimpan | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `assessment.spec.js`: BB-13; berdasarkan laporan pengguna |
+| BB-14 | Assessment ownership | A/B masing-masing memiliki assessment; B memiliki sentinel PDF | B memverifikasi data awal; A membuka URL B lalu memalsukan assessment/field/practice IDs untuk load/delete/upload/jawaban/target lewat HTTP Laravel; bandingkan snapshot B; login B kembali | A ditolak; isi jawaban, target, metadata dan hash/daftar file B tetap sama | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `assessment.spec.js`: BB-14; berdasarkan laporan pengguna |
+| BB-16 | Empty assessment | Assessment A tanpa pertanyaan, dibuat oleh fixture | Buka URL; periksa empty state; kembali ke daftar; buka lagi | HTTP 200; empty state; tanpa form jawaban; navigasi tidak error | Full suite pengguna: 11 PASS, 0 FAIL, 0 SKIP (3 menit) | PASS | `assessment.spec.js`: BB-16; berdasarkan laporan pengguna |
 
 ### Persiapan PostgreSQL dan environment
 
@@ -125,4 +125,55 @@ php tests/e2e/fixtures.php cleanup
 
 Cleanup memakai guard database yang sama; scope dibatasi manifest run, owner, prefix nama/kode dan ID anaknya. Ia menghapus asset/file milik assessment fixture, assessment fixture, domain/hierarkinya, dan tiga akun fixture. Ia menolak referensi di luar fixture, tidak melakukan cleanup massal/reset, dan tidak menghapus data berdasarkan ID request dari browser. Manifest/PDF dihapus setelah cleanup; session/cache testing yang tersisa hanyalah artefak lokal. Jika manifest hilang atau setup terputus, hentikan proses dan periksa database E2E secara manual; jangan mencoba reset database lain.
 
-Snapshot read-only Eloquent dipakai hanya untuk ID fixture dan pembandingan persistence/hash; tindakan yang diuji tetap melalui UI atau HTTP route Laravel dengan cookie/CSRF. Case BB-13/14 memeriksa pesan penolakan existing dan data yang tetap sama; HTTP 419 atau 500 tak dikenal tidak dihitung sebagai keberhasilan authorization. Select2 dioperasikan lewat widget terlihat, tanpa force click atau manipulasi DOM. Belum ada hasil browser untuk membuktikan selector/timing ini pada runtime; jika aplikasi ternyata bermasalah, catat FAIL dan evidence, jangan ubah fitur untuk memaksa PASS.
+Snapshot read-only Eloquent dipakai hanya untuk ID fixture dan pembandingan persistence/hash; tindakan yang diuji tetap melalui UI atau HTTP route Laravel dengan cookie/CSRF. Case BB-13/14 memeriksa pesan penolakan existing dan data yang tetap sama; HTTP 419 atau 500 tak dikenal tidak dihitung sebagai keberhasilan authorization. Select2 dioperasikan lewat widget terlihat, tanpa force click atau manipulasi DOM. Phase 2 telah dilaporkan lulus oleh pengguna. Phase 3 belum dijalankan; jika aplikasi bermasalah, catat FAIL dan evidence, jangan ubah fitur untuk memaksa PASS.
+
+## Phase 3 — Recap, user, profile/security dan lifecycle
+
+Empat test baru **NOT RUN**. Tidak ada browser, fixture CLI, cleanup, atau mutasi database yang dijalankan selama implementasi ini. Config Phase 3 hanya memilih `phase3.spec.js`, mewarisi satu worker, nol retry, Chromium headless, timeout 120 detik, screenshot hanya saat gagal dan trace retained saat gagal dari konfigurasi existing. Output: `node_modules/.cache/playwright-phase3-results/`.
+
+| ID | Test Case | Preconditions | Steps | Expected Result | Actual Result | Status | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| BB-15 | Assessment recap & print | Guard/attestation existing; assessment A aktif draft, 1 domain/kapabilitas/bidang, 2 praktik Level 0 dengan jawaban F dan target 0 | Tolak recap/detail/print saat draft; ubah menjadi inactive+published melalui HTTP Laravel dan periksa 404; unpublish, aktifkan, publish; periksa summary, detail, HTML print; login B dan periksa 404 | Hanya active+published milik A mendapat 200; domain/nama/count sesuai; nilai saat ini dan target tetap 0.0, termasuk minimum domain/institusi; detail merefleksikan hasil F (Baik); print menampilkan dua praktik Fully Achieved, `#print-area`, judul, ringkasan dan tombol cetak; data tidak berubah | Belum dijalankan; source memiliki indikasi defect target nol | NOT RUN | `phase3.spec.js`: BB-15; artefak runtime belum tersedia |
+| BB-17 | User management | Super Admin; identitas dummy email run khusus BB-17 | Create Admin aktif melalui modal/Select2; inspect; edit nama dengan password kosong; refresh; submit email duplikat; tolak delete aktif; toggle inactive; hapus; satu akses URL langsung sebagai Admin A | Satu identitas dummy; role/status/nama tersimpan dan password tetap sama; duplikat tidak menambah record; aktif gagal dihapus dengan alasan yang benar; inactive dapat dihapus; Admin A HTTP 403 | Belum dijalankan | NOT RUN | `phase3.spec.js`: BB-17 |
+| BB-18 | Profile & security | Admin disposable BB-18 terpisah; credential awal dari env existing | Login disposable; edit nama, refresh dan inspect; PATCH nama kosong; PATCH confirmation mismatch dan email duplikat; submit email/password valid lewat UI; inspect boolean hash; periksa logout, login baru, logout UI dan tolak password lama | Nama tersimpan; invalid HTTP 422 dengan error field yang benar dan data tetap sama; email/password benar-benar berubah; sesi lama berakhir; credential baru bekerja dan password lama ditolak | Belum dijalankan; confirmed source defect / pending runtime verification pada SecurityController | NOT RUN | `phase3.spec.js`: BB-18; artefak runtime belum tersedia |
+| BB-19 | Assessment lifecycle | Draft active khusus BB-19 milik A | Edit nama/deskripsi melalui modal; inspect dan refresh; tolak delete aktif; ubah checkbox inactive lewat modal; delete melalui konfirmasi UI; refresh dan inspect withTrashed | Metadata lengkap tetap benar meski judul kartu dipotong; aktif ditolak dihapus; inactive tersimpan; kartu/link ID hilang; record masih ada dengan deleted_at terisi | Belum dijalankan | NOT RUN | `phase3.spec.js`: BB-19 |
+
+### Menjalankan Phase 3
+
+Gunakan database, `.env.testing`, manifest dan router testing yang sudah dipakai Phase 2. **Tidak perlu setup/migrate/reset ulang.** Gunakan origin `APP_URL`/`PW_BASE_URL` existing yang telah lolos attestation; tidak ada server orchestration atau perubahan allowlist.
+
+```powershell
+# Full Phase 3
+node --env-file=.env.testing node_modules/@playwright/test/cli.js --config=playwright.phase3.config.js
+# Masing-masing kasus
+node --env-file=.env.testing node_modules/@playwright/test/cli.js --config=playwright.phase3.config.js --grep BB-15
+node --env-file=.env.testing node_modules/@playwright/test/cli.js --config=playwright.phase3.config.js --grep BB-17
+node --env-file=.env.testing node_modules/@playwright/test/cli.js --config=playwright.phase3.config.js --grep BB-18
+node --env-file=.env.testing node_modules/@playwright/test/cli.js --config=playwright.phase3.config.js --grep BB-19
+```
+
+Tidak ada variable credential baru. BB-17 memakai `PW_ADMIN_A_PASSWORD` untuk dummy; BB-18 memakai nilai yang sama sebagai password awal disposable. Password pengganti BB-18 berasal dari nilai env tersebut ditambah suffix `-BB-18`, sehingga selalu berbeda tanpa hardcode password. Fixture hanya mengembalikan `passwordMatchesInitial`/`passwordMatchesReplacement`; tidak mengeluarkan password, hash, cookie atau token. Jangan mengunggah trace/screenshot tanpa pemeriksaan: seperti Phase 2, artefak Playwright dapat merekam input credential testing.
+
+### Fixture, inspect dan cleanup
+
+`prepare` berjalan otomatis sesudah preflight/attestation existing. BB-15 dan BB-19 hanya mengganti assessment dengan prefix kasus dan akun manifest yang sesuai, termasuk sisa soft-deleted. BB-15 mengisi hierarki dasar, target 0, dua jawaban F dan counter 1 domain terjawab. BB-19 dimulai tanpa pertanyaan karena hanya menguji metadata/lifecycle; inspect menerima dua nama yang diizinkan (awal/Updated), memakai owner manifest dan melaporkan `deleted_at` secara read-only.
+
+BB-17 tidak menambahkan akun pada prepare: akun dibuat melalui UI. Identitas ditemukan lewat email `bb-17-<run>@aimatrik-e2e.invalid` dan nama prefix kasus yang tepat. BB-18 dibuat oleh prepare dengan username stabil `<prefix>-BB-18`, email `bb-18-<run>@aimatrik-e2e.invalid`, dan hanya mengizinkan email perubahan `bb-18-updated-<run>@aimatrik-e2e.invalid`. Kedua akun wajib Admin non-primary, berbeda dari tiga ID utama manifest. Ambiguitas atau penanda yang tidak sesuai menyebabkan fail closed. Perubahan nama/email/password disposable setelah kegagalan dipulihkan pada prepare berikutnya dengan menghapus lalu membuat ulang hanya akun disposable yang terverifikasi.
+
+Cleanup user menolak assessment (termasuk soft-deleted), asset profil, session database, atau password-reset token yang tidak diharapkan; tidak melakukan cascade terhadap relasi tersebut. Tidak ada upload foto pada test ini. Tiga akun utama tidak diubah oleh test. Command cleanup existing juga membersihkan disposable terverifikasi; jangan menjalankannya ketika suite/server masih digunakan.
+
+```powershell
+# Opsional: metadata read-only, tanpa password/hash
+php tests/e2e/fixtures.php inspect BB-15
+php tests/e2e/fixtures.php inspect BB-17
+php tests/e2e/fixtures.php inspect BB-18
+php tests/e2e/fixtures.php inspect BB-19
+# Setelah selesai dan router dihentikan, cleanup seluruh fixture run terverifikasi:
+php tests/e2e/fixtures.php cleanup
+```
+
+### Defect yang harus tetap terlihat
+
+- BB-15: `pluck('levelTarget')->filter()` pada controller membuang angka 0. Ekspektasi summary/print tetap **0.0**, bukan `-`. Soft assertions memungkinkan kedua halaman dan pemeriksaan owner tetap berjalan, tetapi setiap mismatch tetap membuat test **FAIL**.
+- BB-18: `SecurityController::update()` tidak memanggil service `updateUserSecurity()` sebelum commit. Ini **confirmed source defect / pending runtime verification**. Test tetap menuntut email/password baru tersimpan, sesi berakhir, login baru berhasil dan password lama ditolak. Tidak ada skip/expected failure untuk defect ini; kegagalan login baru dapat menghentikan langkah lanjutan secara normal. Controller tidak diubah.
+- Detail recap existing menampilkan agregat bidang praktik (level/target/gap/performa); jawaban individual F diperiksa pada fixture dan HTML print. Status BB-19 diubah melalui checkbox modal edit karena kartu existing tidak menawarkan tombol set-status terpisah.

@@ -70,12 +70,12 @@ export async function prepare(page, baseURL, id) {
     return fixture('prepare', id);
 }
 
-export async function login(page, role = 'a') {
+export async function login(page, role = 'a', credentials) {
     const key = { super: 'SUPER', a: 'ADMIN_A', b: 'ADMIN_B' }[role];
     await page.context().clearCookies();
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
-    await page.getByLabel('Alamat email', { exact: true }).fill(process.env[`PW_${key}_EMAIL`]);
-    await page.getByLabel('Kata sandi', { exact: true }).fill(process.env[`PW_${key}_PASSWORD`]);
+    await page.getByLabel('Alamat email', { exact: true }).fill(credentials?.email ?? process.env[`PW_${key}_EMAIL`]);
+    await page.getByLabel('Kata sandi', { exact: true }).fill(credentials?.password ?? process.env[`PW_${key}_PASSWORD`]);
     await page.getByRole('button', { name: 'Login', exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/home\/?$/);
 }

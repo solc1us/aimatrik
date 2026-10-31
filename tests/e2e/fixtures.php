@@ -82,6 +82,38 @@ try {
     }
     $prefix = $manifest['prefix'];
     $owned = fn () => DaftarPenilaian::withTrashed()->whereIn('user_id', $manifest['users'])->where('name', 'like', $prefix.' %');
+    $caseUser = function (string $case) use ($manifest, $prefix): ?User {
+        $email = strtolower($case).'-'.$manifest['run'].'@aimatrik-e2e.invalid';
+        $updatedEmail = strtolower($case).'-updated-'.$manifest['run'].'@aimatrik-e2e.invalid';
+        $names = [$prefix.' '.$case.' User', $prefix.' '.$case.' Updated'];
+        $users = User::whereIn('email', [$email, $updatedEmail])->orWhere('username', $prefix.'-'.$case)->orWhereIn('name', $names)->get();
+        if ($users->count() > 1) {
+            throw new RuntimeException('E2E fixture isolation refused: ambiguous disposable user identity.');
+        }
+        $user = $users->first();
+        if ($user && (in_array($user->id, $manifest['users'], true) || $user->is_primary_account || $user->is_super_admin
+            || ! in_array($user->name, $names, true)
+            || ! in_array($user->email, $case === 'BB-18' ? [$email, $updatedEmail] : [$email], true)
+            || ($case === 'BB-18' && $user->username !== $prefix.'-'.$case))) {
+            throw new RuntimeException('E2E fixture isolation refused: disposable user does not match the active run identity.');
+        }
+
+        return $user;
+    };
+    $dropCaseUser = function (string $case) use ($caseUser, $manifest): void {
+        $user = $caseUser($case);
+        if (! $user) {
+            return;
+        }
+        if (DaftarPenilaian::withTrashed()->where('user_id', $user->id)->exists()
+            || Asset::where('asset_type', User::class)->where('asset_id', $user->id)->exists()
+            || DB::table('sessions')->where('user_id', $user->id)->exists()
+            || DB::table('password_reset_tokens')->whereIn('email', [$user->email,
+                strtolower($case).'-'.$manifest['run'].'@aimatrik-e2e.invalid'])->exists()) {
+            throw new RuntimeException('E2E fixture isolation refused: disposable user has unexpected related data.');
+        }
+        $user->delete();
+    };
     $dropAssessment = function (DaftarPenilaian $assessment): void {
         $ids = DB::table('question_answer_praktiks as p')
             ->join('question_answer_bid_praktiks as f', 'f.id', '=', 'p.question_answer_bid_praktik_id')
@@ -102,7 +134,10 @@ try {
         if (DaftarPenilaian::withTrashed()->whereIn('user_id', $manifest['users'])->where('name', 'not like', $prefix.' %')->exists()) {
             throw new RuntimeException('Cleanup refused: non-fixture data references fixture accounts.');
         }
-        DB::transaction(function () use ($owned, $dropAssessment, $prefix, $manifest) {
+        DB::transaction(function () use ($owned, $dropAssessment, $dropCaseUser, $prefix, $manifest) {
+            foreach (['BB-17', 'BB-18'] as $case) {
+                $dropCaseUser($case);
+            }
             foreach ($owned()->get() as $assessment) {
                 $dropAssessment($assessment);
             }
@@ -121,12 +156,25 @@ try {
     }
     if (in_array($action, ['prepare', 'inspect'], true)) {
         $case = $argv[2] ?? '';
-        if (! in_array($case, ['BB-07', 'BB-08', 'BB-09', 'BB-10', 'BB-11', 'BB-12', 'BB-13', 'BB-14', 'BB-16'], true)) {
+        if (! in_array($case, ['BB-07', 'BB-08', 'BB-09', 'BB-10', 'BB-11', 'BB-12', 'BB-13', 'BB-14', 'BB-15', 'BB-16', 'BB-17', 'BB-18', 'BB-19'], true)) {
             throw new RuntimeException('Unknown E2E case.');
         }
         $name = $prefix.' '.$case;
         if ($action === 'prepare') {
-            DB::transaction(function () use ($owned, $dropAssessment, $name, $case, $manifest, $prefix) {
+            DB::transaction(function () use ($owned, $dropAssessment, $dropCaseUser, $name, $case, $manifest, $prefix) {
+                if (in_array($case, ['BB-17', 'BB-18'], true)) {
+                    $dropCaseUser($case);
+                    if ($case === 'BB-18') {
+                        $password = Illuminate\Support\Env::get('PW_ADMIN_A_PASSWORD');
+                        if (! is_string($password) || strlen($password) < 12) {
+                            throw new RuntimeException('E2E fixture isolation refused: disposable credential is unavailable.');
+                        }
+                        User::create(['username' => $prefix.'-'.$case, 'name' => $name.' User',
+                            'email' => strtolower($case).'-'.$manifest['run'].'@aimatrik-e2e.invalid',
+                            'email_verified_at' => now(), 'password' => Hash::make($password),
+                            'is_active' => true, 'is_super_admin' => false, 'is_primary_account' => false]);
+                    }
+                }
                 $baseline = Domain::whereKey($manifest['domain'])->where('code', $prefix.'-BASE')->first();
                 if (! $baseline) {
                     throw new RuntimeException('E2E fixture isolation refused: baseline domain identity mismatch.');
@@ -178,10 +226,10 @@ try {
                         Domain::create(['code' => $prefix.'-'.$case, 'name' => $name.' Domain', 'is_active' => false]);
                     }
                 }
-                if (in_array($case, ['BB-11', 'BB-12', 'BB-13', 'BB-14', 'BB-16'], true)) {
+                if (in_array($case, ['BB-11', 'BB-12', 'BB-13', 'BB-14', 'BB-15', 'BB-16', 'BB-19'], true)) {
                     foreach ($case === 'BB-14' ? ['a', 'b'] : ['a'] as $role) {
                         $assessment = DaftarPenilaian::create(['user_id' => $manifest['users'][$role], 'name' => $name.' '.strtoupper($role), 'description' => $name, 'is_active' => true]);
-                        if ($case !== 'BB-16') {
+                        if (! in_array($case, ['BB-16', 'BB-19'], true)) {
                             app(DaftarPenilaianCommandService::class)->storeDaftarPenilaianQuestion($assessment, Domain::whereKey($manifest['domain'])->get());
                             if ($case !== 'BB-11') {
                                 $fields = QuestionAnswerBidPraktik::whereHas('questionAnswerBidKapabilitas.daftarPenilaianQuestion', fn ($q) => $q->where('daftar_penilaian_id', $assessment->id))->get();
@@ -195,6 +243,9 @@ try {
                                         app(App\Services\Asset\AssetCommandService::class)->storeAsset(QuestionAnswerPraktik::class, $practice->id, $path, 'penilaian-file-pendukung-'.$practice->id);
                                     }
                                 }
+                                if ($case === 'BB-15') {
+                                    $assessment->update(['count_domain_question' => 1, 'count_domain_answered' => 1]);
+                                }
                             }
                         }
                     }
@@ -205,8 +256,29 @@ try {
         $manifest['name'] = $name;
         $manifest['dummyDomain'] = Domain::where('code', $prefix.'-'.$case)->value('id');
         $manifest['dummyDomains'] = Domain::where('code', $prefix.'-'.$case)->get(['id', 'code', 'name', 'is_active'])->all();
+        if (in_array($case, ['BB-17', 'BB-18'], true)) {
+            $user = $caseUser($case);
+            $password = Illuminate\Support\Env::get('PW_ADMIN_A_PASSWORD');
+            if (! is_string($password) || strlen($password) < 12) {
+                throw new RuntimeException('E2E fixture isolation refused: disposable credential is unavailable.');
+            }
+            $manifest['testEmail'] = strtolower($case).'-'.$manifest['run'].'@aimatrik-e2e.invalid';
+            $manifest['updatedEmail'] = strtolower($case).'-updated-'.$manifest['run'].'@aimatrik-e2e.invalid';
+            $manifest['testUser'] = $user ? array_merge($user->only(['id', 'name', 'email', 'is_active', 'is_super_admin']), [
+                'passwordMatchesInitial' => Hash::check($password, $user->password),
+                'passwordMatchesReplacement' => Hash::check($password.'-BB-18', $user->password),
+            ]) : null;
+        }
         foreach (['a', 'b'] as $role) {
-            $assessment = $owned()->where('name', $name.' '.strtoupper($role))->where('user_id', $manifest['users'][$role])->first();
+            if ($case === 'BB-19' && $role === 'a') {
+                $assessments = $owned()->whereIn('name', [$name.' A', $name.' Updated'])->where('user_id', $manifest['users'][$role])->get();
+                if ($assessments->count() > 1) {
+                    throw new RuntimeException('E2E fixture isolation refused: ambiguous assessment identity.');
+                }
+                $assessment = $assessments->first();
+            } else {
+                $assessment = $owned()->where('name', $name.' '.strtoupper($role))->where('user_id', $manifest['users'][$role])->first();
+            }
             $fields = $assessment ? QuestionAnswerBidPraktik::whereHas('questionAnswerBidKapabilitas.daftarPenilaianQuestion', fn ($q) => $q->where('daftar_penilaian_id', $assessment->id))->get() : collect();
             $answers = QuestionAnswerPraktik::whereIn('question_answer_bid_praktik_id', $fields->pluck('id'))->orderBy('id')->get();
             $assets = Asset::where('asset_type', QuestionAnswerPraktik::class)->whereIn('asset_id', $answers->pluck('id'))->orderBy('id')->get()->map(fn ($a) => [
@@ -216,6 +288,9 @@ try {
                 'fields' => $fields->map->only(['id', 'level_target'])->all(),
                 'answers' => $answers->map->only(['id', 'answer', 'description'])->all(), 'assets' => $assets->all(),
                 'files' => $answers->flatMap(fn ($answer) => Storage::allFiles('public/penilaian/'.$answer->id))->sort()->values()->all()];
+            if ($case === 'BB-19' && $assessment) {
+                $manifest[$role]['assessment']['deleted_at'] = $assessment->deleted_at?->toISOString();
+            }
         }
     } elseif (! in_array($action, ['check', 'setup'], true)) {
         throw new RuntimeException('Unknown fixture command.');
