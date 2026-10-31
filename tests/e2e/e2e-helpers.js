@@ -10,9 +10,11 @@ export const assessmentPath = id => `/admin/daftar-penilaian/penilaian/${id}`;
 const uiDiagnostics = new WeakMap();
 
 export function fixture(action, id) {
+    const started = Date.now();
     const result = spawnSync(process.env.PW_PHP || 'php', ['tests/e2e/fixtures.php', action, ...(id ? [id] : [])], {
         cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
     });
+    console.info(`[E2E timing] fixture ${action}${id ? ` ${id}` : ''}: ${Date.now() - started} ms`);
     if (result.error || result.status !== 0) {
         if (result.stderr?.startsWith('E2E fixture isolation refused:')) throw new Error(result.stderr.trim());
         throw new Error('E2E fixture guard/setup failed; verify the dedicated testing environment. Diagnostics suppressed to protect credentials.');
@@ -82,6 +84,7 @@ export async function notice(page, title = 'Berhasil!') {
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.swal2-title')).toHaveText(title);
     await page.locator('.swal2-confirm').click();
+    await expect(page.locator('.swal2-title')).toBeHidden();
 }
 
 export async function choose(page, select, label) {
@@ -110,7 +113,20 @@ export async function saveModal(page, selector, values) {
     await expect(modal).toBeVisible();
     for (const [name, value] of Object.entries(values)) await modal.locator(`[name="${name}"]`).fill(value);
     await modal.locator('[name="is_active"]').uncheck();
-    await modal.locator('button[type="submit"]').click();
+    const action = new URL(await modal.locator('form').getAttribute('action'), page.url()).href;
+    const destination = page.url();
+    const [response] = await Promise.all([
+        page.waitForResponse(response => response.request().isNavigationRequest()
+            && response.request().method() === 'POST' && response.url() === action),
+        page.waitForEvent('domcontentloaded'),
+        modal.locator('button[type="submit"]').click(),
+    ]);
+    expect(response.status()).toBe(302);
+    expect(new URL(response.headers().location, action).href).toBe(destination);
+    const redirected = response.request().redirectedTo();
+    expect(redirected?.url()).toBe(destination);
+    expect((await redirected.response()).status()).toBe(200);
+    await expect(page).toHaveURL(destination);
     await notice(page);
 }
 

@@ -143,16 +143,34 @@ try {
                         $capabilities = $domain->bidangKapabilitas()->pluck('id');
                         $fields = BidangPraktik::whereIn('bidang_kapabilitas_id', $capabilities)->pluck('id');
                         $practices = Praktik::whereIn('bidang_praktik_id', $fields)->pluck('id');
+                        if ($domain->bidangKapabilitas()->where('code', 'not like', $prefix.'-'.$case.'-%')->exists()
+                            || BidangPraktik::whereIn('id', $fields)->where('code', 'not like', $prefix.'-'.$case.'-%')->exists()
+                            || Praktik::whereIn('id', $practices)->where('praktik', 'not like', $name.' %')->exists()) {
+                            throw new RuntimeException('E2E fixture isolation refused: dummy hierarchy contains data without the fixture marker; no deletion performed.');
+                        }
+                        if ($case === 'BB-08') {
+                            // Raw joins include soft-deleted references at every snapshot level.
+                            $references = DB::table('daftar_penilaian_questions as q')
+                                ->leftJoin('question_answer_bid_kapabilitas as c', 'c.daftar_penilaian_question_id', '=', 'q.id')
+                                ->leftJoin('question_answer_bid_praktiks as f', 'f.question_answer_bid_kapabilitas_id', '=', 'c.id')
+                                ->leftJoin('question_answer_praktiks as p', 'p.question_answer_bid_praktik_id', '=', 'f.id')
+                                ->where(fn ($q) => $q->where('q.domain_id', $domain->id)
+                                    ->orWhereIn('c.bidang_kapabilitas_id', $capabilities)
+                                    ->orWhereIn('f.bidang_praktik_id', $fields)->orWhereIn('p.praktik_id', $practices))
+                                ->distinct()->pluck('q.daftar_penilaian_id');
+                            $assessments = $owned()->whereIn('id', $references)->lockForUpdate()->get();
+                            if ($assessments->count() !== $references->count()) {
+                                throw new RuntimeException('E2E fixture isolation refused: BB-08 references an assessment outside the active fixture accounts/prefix; no deletion performed.');
+                            }
+                            foreach ($assessments as $assessment) {
+                                $dropAssessment($assessment);
+                            }
+                        }
                         if (DaftarPenilaianQuestion::withTrashed()->where('domain_id', $domain->id)->exists()
                             || DB::table('question_answer_bid_kapabilitas')->whereIn('bidang_kapabilitas_id', $capabilities)->exists()
                             || QuestionAnswerBidPraktik::withTrashed()->whereIn('bidang_praktik_id', $fields)->exists()
                             || QuestionAnswerPraktik::withTrashed()->whereIn('praktik_id', $practices)->exists()) {
                             throw new RuntimeException('E2E fixture isolation refused: dummy domain hierarchy is referenced by an assessment; no deletion performed.');
-                        }
-                        if ($domain->bidangKapabilitas()->where('code', 'not like', $prefix.'-'.$case.'-%')->exists()
-                            || BidangPraktik::whereIn('id', $fields)->where('code', 'not like', $prefix.'-'.$case.'-%')->exists()
-                            || Praktik::whereIn('id', $practices)->where('praktik', 'not like', $name.' %')->exists()) {
-                            throw new RuntimeException('E2E fixture isolation refused: dummy hierarchy contains data without the fixture marker; no deletion performed.');
                         }
                         $domain->delete();
                     }

@@ -5,6 +5,18 @@ if (PHP_SAPI !== 'cli-server') {
     http_response_code(404);
     exit;
 }
+// Public assets need neither Laravel nor a database connection on every request.
+// Use the original URI: Symfony can strip an existing file's script/base URL.
+$path = rawurldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+if (in_array($_SERVER['REQUEST_METHOD'] ?? '', ['GET', 'HEAD'], true) && str_starts_with($path, '/assets/')) {
+    $assets = realpath(dirname(__DIR__, 2).'/public/assets');
+    $file = realpath(dirname(__DIR__, 2).'/public'.$path);
+    if ($assets && $file && is_file($file) && str_starts_with($file, $assets.DIRECTORY_SEPARATOR)
+        && ! preg_match('/^(php\d*|phtml|phar)$/i', pathinfo($path, PATHINFO_EXTENSION))
+        && ! preg_match('/^(php\d*|phtml|phar)$/i', pathinfo($file, PATHINFO_EXTENSION))) {
+        return false;
+    }
+}
 try {
     $context = require __DIR__.'/bootstrap.php';
     extract($context);
@@ -13,9 +25,6 @@ try {
     if (rtrim(config('app.url'), '/') !== $request->getSchemeAndHttpHost()) {
         throw new RuntimeException('E2E APP_URL must match the server origin.');
     }
-    // For an existing static file, Symfony may strip its script/base URL to '/'.
-    // Classify static requests using the original URI, before dispatching to Laravel.
-    $path = rawurldecode(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
     if (str_starts_with($path, '/storage/')) {
         // Serve only the isolated test disk, never the development storage junction.
         $file = realpath($runtime.'/files/public/'.substr($path, 9));
@@ -33,7 +42,8 @@ try {
         exit;
     }
     $static = realpath($root.'/public'.$path);
-    if ($static && is_file($static) && str_starts_with($static, realpath($root.'/public').DIRECTORY_SEPARATOR)
+    if (! str_starts_with($path, '/assets/') && $static && is_file($static)
+        && str_starts_with($static, realpath($root.'/public').DIRECTORY_SEPARATOR)
         && strtolower(pathinfo($static, PATHINFO_EXTENSION)) !== 'php') {
         return false;
     }
