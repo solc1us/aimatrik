@@ -39,6 +39,10 @@ final class SecurityController extends Controller
                 throw new Exception(trans('response.error.update', ['data' => 'User', 'error' => 'User not found']));
             }
 
+            if (! $this->userCommandService->updateUserSecurity(request: $request, user: $user)) {
+                throw new Exception(trans('response.error.update', ['data' => 'User Security', 'error' => 'Data gagal disimpan']));
+            }
+
             DB::commit();
 
             // Apakah mengganti password

@@ -50,10 +50,7 @@ final class RekapanPenilaianController extends Controller
             $minLevelKematangan = $this->_calculateMinimumLevel($collection, 'levelSaatIni');
 
             // Mendapatkan nilai minimum dengan mengabaikan null
-            $filteredLevelTarget = $collection->pluck('levelTarget')->filter();
-            $minLevelTarget = $filteredLevelTarget->isEmpty()
-                ? null
-                : $filteredLevelTarget->min();
+            $minLevelTarget = $this->_calculateMinimumLevel($collection, 'levelTarget');
 
             // Mendapatkan pertanyaan berdasarkan domain dan index domain
             $domainQuestion = $this->penilaianQueryService->getQuestionById(
@@ -188,8 +185,7 @@ final class RekapanPenilaianController extends Controller
 
             $minLevelKematangan = $this->_calculateMinimumLevel($collection, 'levelSaatIni');
 
-            $filteredLevelTarget = $collection->pluck('levelTarget')->filter();
-            $minLevelTarget = $filteredLevelTarget->isEmpty() ? null : $filteredLevelTarget->min();
+            $minLevelTarget = $this->_calculateMinimumLevel($collection, 'levelTarget');
 
             // Mendapatkan domain berdasarkan id domain
             $domainQuestion = $this->penilaianQueryService->getQuestionById(
