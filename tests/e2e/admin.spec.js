@@ -1,24 +1,37 @@
 import { test, expect } from '@playwright/test';
-import { prepare, fixture, login, master, saveModal, notice, removeRow, choose } from './e2e-helpers.js';
+import { prepare, fixture, login, master, saveModal, notice, removeRow, choose, openUi } from './e2e-helpers.js';
 
 let f;
 test.beforeEach(async ({ page, baseURL }, info) => {
     f = await prepare(page, baseURL, info.title.match(/BB-\d+/)[0]);
 });
 
-test('BB-07 - Master data mengikuti role pada akses URL langsung', async ({ page }) => {
-    const paths = [master, `${master}/bidang-kapabilitas/${f.domain}`,
-        `${master}/bidang-kapabilitas/${f.domain}/bidang-praktik/${f.capability}`,
-        `${master}/bidang-kapabilitas/${f.domain}/bidang-praktik/${f.capability}/praktik/${f.field}`];
-    await page.goto(master, { waitUntil: 'domcontentloaded' });
-    await expect(page).toHaveURL(/\/login\/?$/);
+const masterPaths = () => [master, `${master}/bidang-kapabilitas/${f.domain}`,
+    `${master}/bidang-kapabilitas/${f.domain}/bidang-praktik/${f.capability}`,
+    `${master}/bidang-kapabilitas/${f.domain}/bidang-praktik/${f.capability}/praktik/${f.field}`];
+
+test('BB-07 - Guest ditolak pada semua URL master data', async ({ page }) => {
+    for (const path of masterPaths()) {
+        const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
+        expect(response.status()).toBe(200);
+        const redirected = response.request().redirectedFrom();
+        expect(redirected).not.toBeNull();
+        expect((await redirected.response()).status()).toBe(302);
+        await expect(page).toHaveURL(/\/login\/?$/);
+    }
+});
+
+test('BB-07 - Super Admin dapat mengakses semua URL master data', async ({ page }) => {
     await login(page, 'super');
-    for (const path of paths) {
+    for (const path of masterPaths()) {
         expect((await page.goto(path, { waitUntil: 'domcontentloaded' })).status()).toBe(200);
         await expect(page.locator('#dataTable')).toBeVisible();
     }
+});
+
+test('BB-07 - Admin biasa mendapat 403 pada semua URL master data', async ({ page }) => {
     await login(page, 'a');
-    for (const path of paths) {
+    for (const path of masterPaths()) {
         expect((await page.goto(path, { waitUntil: 'domcontentloaded' })).status()).toBe(403);
         await expect(page.getByRole('heading', { name: '403 - Forbidden Access', exact: true })).toBeVisible();
     }
@@ -77,7 +90,7 @@ test('BB-09 - CRUD hierarki kecil mempertahankan parent dan navigasi', async ({ 
     const capabilityPath = `${master}/bidang-kapabilitas/${f.dummyDomain}`;
     await domainRow.locator(`a[href$="/bidang-kapabilitas/${f.dummyDomain}"]`).click();
     await expect(page).toHaveURL(new RegExp(`${capabilityPath}$`));
-    await page.locator('[data-bs-target="#modalCreateBidangKapabilitas"]').click();
+    await openUi(page, '#modalCreateBidangKapabilitas');
     await expect(page.locator('#modalCreateBidangKapabilitas [name="domain_id"]')).toHaveValue(f.dummyDomain);
     const capCode = `${f.prefix}-BB-09-C`;
     await saveModal(page, '#modalCreateBidangKapabilitas', { code: capCode, name: `${f.name} Capability` });
@@ -91,7 +104,7 @@ test('BB-09 - CRUD hierarki kecil mempertahankan parent dan navigasi', async ({ 
     const capabilityId = new URL(fieldURL).pathname.split('/').at(-1);
     await fieldLink.click();
     await expect(page).toHaveURL(fieldURL);
-    await page.locator('[data-bs-target="#modalCreateBidangPraktik"]').click();
+    await openUi(page, '#modalCreateBidangPraktik');
     await expect(page.locator('#modalCreateBidangPraktik [name="bidang_kapabilitas_id"]')).toHaveValue(capabilityId);
     const fieldCode = `${f.prefix}-BB-09-F`;
     await saveModal(page, '#modalCreateBidangPraktik', { code: fieldCode, name: `${f.name} Field` });
@@ -105,7 +118,7 @@ test('BB-09 - CRUD hierarki kecil mempertahankan parent dan navigasi', async ({ 
     const fieldId = new URL(practiceURL).pathname.split('/').at(-1);
     await practiceLink.click();
     await expect(page).toHaveURL(practiceURL);
-    await page.locator('[data-bs-target="#modalCreatePraktik"]').click();
+    await openUi(page, '#modalCreatePraktik');
     const practiceModal = page.locator('.modal#modalCreatePraktik');
     await expect(practiceModal.locator('[name="bidang_praktik_id"]')).toHaveValue(fieldId);
     await choose(page, practiceModal.locator('[name="kategori_level"]'), 'Level 0');

@@ -127,14 +127,32 @@ try {
         $name = $prefix.' '.$case;
         if ($action === 'prepare') {
             DB::transaction(function () use ($owned, $dropAssessment, $name, $case, $manifest, $prefix) {
+                $baseline = Domain::whereKey($manifest['domain'])->where('code', $prefix.'-BASE')->first();
+                if (! $baseline) {
+                    throw new RuntimeException('E2E fixture isolation refused: baseline domain identity mismatch.');
+                }
+                $baseline->update(['is_active' => true]);
+                // Retain referenced snapshots, but exclude leftover dummy domains from new ones.
+                Domain::whereIn('code', [$prefix.'-BB-08', $prefix.'-BB-09'])->update(['is_active' => false]);
                 foreach ($owned()->where('name', 'like', $name.' %')->get() as $assessment) {
                     $dropAssessment($assessment);
                 }
                 if (in_array($case, ['BB-08', 'BB-09'], true)) {
                     $domain = Domain::where('code', $prefix.'-'.$case)->first();
                     if ($domain) {
-                        if (DaftarPenilaianQuestion::withTrashed()->where('domain_id', $domain->id)->exists()) {
-                            throw new RuntimeException('Cannot replace referenced fixture domain.');
+                        $capabilities = $domain->bidangKapabilitas()->pluck('id');
+                        $fields = BidangPraktik::whereIn('bidang_kapabilitas_id', $capabilities)->pluck('id');
+                        $practices = Praktik::whereIn('bidang_praktik_id', $fields)->pluck('id');
+                        if (DaftarPenilaianQuestion::withTrashed()->where('domain_id', $domain->id)->exists()
+                            || DB::table('question_answer_bid_kapabilitas')->whereIn('bidang_kapabilitas_id', $capabilities)->exists()
+                            || QuestionAnswerBidPraktik::withTrashed()->whereIn('bidang_praktik_id', $fields)->exists()
+                            || QuestionAnswerPraktik::withTrashed()->whereIn('praktik_id', $practices)->exists()) {
+                            throw new RuntimeException('E2E fixture isolation refused: dummy domain hierarchy is referenced by an assessment; no deletion performed.');
+                        }
+                        if ($domain->bidangKapabilitas()->where('code', 'not like', $prefix.'-'.$case.'-%')->exists()
+                            || BidangPraktik::whereIn('id', $fields)->where('code', 'not like', $prefix.'-'.$case.'-%')->exists()
+                            || Praktik::whereIn('id', $practices)->where('praktik', 'not like', $name.' %')->exists()) {
+                            throw new RuntimeException('E2E fixture isolation refused: dummy hierarchy contains data without the fixture marker; no deletion performed.');
                         }
                         $domain->delete();
                     }
@@ -186,6 +204,10 @@ try {
     }
     echo json_encode($manifest, JSON_THROW_ON_ERROR);
 } catch (Throwable $exception) {
+    if (str_starts_with($exception->getMessage(), 'E2E fixture isolation refused:')) {
+        fwrite(STDERR, $exception->getMessage()."\n");
+        exit(1);
+    }
     // Do not emit SQL/configuration exceptions or environment credential values.
     fwrite(STDERR, "E2E fixture refused/failed. Verify .env.testing, dedicated PostgreSQL database, fixture manifest and operation prerequisites. No reset is performed.\n");
     exit(1);

@@ -24,7 +24,12 @@ try {
             http_response_code(404);
             exit;
         }
-        (new Symfony\Component\HttpFoundation\BinaryFileResponse($file))->send();
+        $response = new Symfony\Component\HttpFoundation\BinaryFileResponse($file);
+        if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'pdf') {
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->prepare($request);
+        }
+        $response->send();
         exit;
     }
     $static = realpath($root.'/public'.$path);

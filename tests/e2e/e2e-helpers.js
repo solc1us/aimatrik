@@ -7,12 +7,16 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const runtime = new URL('../../node_modules/.cache/aimatrik-e2e/', import.meta.url);
 export const master = '/admin/master-data/domain';
 export const assessmentPath = id => `/admin/daftar-penilaian/penilaian/${id}`;
+const uiDiagnostics = new WeakMap();
 
 export function fixture(action, id) {
     const result = spawnSync(process.env.PW_PHP || 'php', ['tests/e2e/fixtures.php', action, ...(id ? [id] : [])], {
         cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
     });
-    if (result.error || result.status !== 0) throw new Error('E2E fixture guard/setup failed; verify the dedicated testing environment. Diagnostics suppressed to protect credentials.');
+    if (result.error || result.status !== 0) {
+        if (result.stderr?.startsWith('E2E fixture isolation refused:')) throw new Error(result.stderr.trim());
+        throw new Error('E2E fixture guard/setup failed; verify the dedicated testing environment. Diagnostics suppressed to protect credentials.');
+    }
     try { return JSON.parse(result.stdout); } catch { throw new Error('E2E fixture returned invalid metadata.'); }
 }
 
@@ -26,6 +30,29 @@ export async function prepare(page, baseURL, id) {
     const origin = new URL(baseURL);
     expect(origin.protocol).toBe('http:');
     expect(origin.hostname).toBe('127.0.0.1');
+    const events = [];
+    uiDiagnostics.set(page, events);
+    const clean = value => {
+        let text = String(value).replace(/https?:\/\/[^\s"'<>]+/g, url => {
+            try { return new URL(url).origin + new URL(url).pathname; } catch { return '[URL]'; }
+        });
+        for (const [key, secret] of Object.entries(process.env)) {
+            if (/PASSWORD|TOKEN|SECRET|APP_KEY|PW_.*EMAIL/i.test(key) && secret?.length >= 4) text = text.replaceAll(secret, '[redacted]');
+        }
+        return text.slice(0, 600);
+    };
+    const record = event => events.push({ time: Date.now(), ...event });
+    page.on('pageerror', error => record({ pageerror: clean(error.message) }));
+    page.on('console', message => { if (message.type() === 'error') record({ consoleError: clean(message.text()) }); });
+    page.on('request', request => {
+        if (['script', 'stylesheet'].includes(request.resourceType())) record({ requested: clean(request.url()) });
+    });
+    page.on('response', response => {
+        if (['script', 'stylesheet'].includes(response.request().resourceType())) {
+            record({ asset: clean(response.url()), status: response.status(), contentType: response.headers()['content-type'] });
+        }
+    });
+    page.on('requestfailed', request => record({ failed: clean(request.url()), reason: clean(request.failure()?.errorText) }));
     const manifest = fixture('check');
     // Attest the HTTP server too: checking only the CLI database is insufficient.
     const response = await page.request.get('/login', { maxRedirects: 0 });
@@ -94,6 +121,60 @@ export async function removeRow(page, row) {
     await notice(page);
 }
 
+export async function openUi(page, selector) {
+    const targetSelector = selector.startsWith('#modal') ? `.modal${selector}` : selector;
+    const button = page.locator(`[data-bs-target="${selector}"]`);
+    const target = page.locator(targetSelector);
+    const states = [];
+    const snapshot = async stage => {
+        try {
+            states.push({ stage, time: Date.now(), ...await page.evaluate(({ selector, targetSelector }) => {
+                const trigger = document.querySelector(`[data-bs-target="${selector}"]`);
+                const targets = [...document.querySelectorAll(targetSelector)];
+                const describe = element => {
+                    if (!element) return null;
+                    const rect = element.getBoundingClientRect();
+                    const style = getComputedStyle(element);
+                    return { tag: element.tagName, id: element.id, classes: element.className,
+                        expanded: element.getAttribute('aria-expanded'), hidden: element.getAttribute('aria-hidden'),
+                        toggle: element.getAttribute('data-bs-toggle'), target: element.getAttribute('data-bs-target'),
+                        parent: element.getAttribute('data-bs-parent'), display: style.display, visibility: style.visibility,
+                        pointerEvents: style.pointerEvents, rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height } };
+                };
+                const rect = trigger?.getBoundingClientRect();
+                const parent = targets[0]?.getAttribute('data-bs-parent');
+                return { path: location.pathname, readyState: document.readyState,
+                    bootstrap: { modal: typeof window.bootstrap?.Modal, collapse: typeof window.bootstrap?.Collapse,
+                        version: window.bootstrap?.Modal?.VERSION,
+                        modalInstance: !!window.bootstrap?.Modal?.getInstance(targets[0]),
+                        collapseInstance: !!window.bootstrap?.Collapse?.getInstance(targets[0]) },
+                    trigger: describe(trigger), targetCount: targets.length, targets: targets.map(describe),
+                    parentCount: parent ? document.querySelectorAll(parent).length : null,
+                    hit: rect ? describe(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)) : null,
+                    overlays: [...document.querySelectorAll('.modal-backdrop, .swal2-container')].map(describe) };
+            }, { selector, targetSelector }) });
+        } catch { states.push({ stage, unavailable: true }); }
+    };
+    try {
+        await snapshot('before-ready');
+        // Navigation can expose clickable markup before the footer Bootstrap script executes.
+        await page.waitForLoadState('domcontentloaded');
+        await snapshot('before-click');
+        await expect(button).toHaveCount(1);
+        await expect(target).toHaveCount(1);
+        await button.click();
+        await expect(target).toHaveClass(/\bshow\b/);
+        await expect(target).toBeVisible();
+    } catch (error) {
+        await snapshot('after-failure');
+        await test.info().attach('bootstrap-ui-diagnostics', {
+            body: JSON.stringify({ selector, states, events: uiDiagnostics.get(page) || [] }, null, 2),
+            contentType: 'application/json',
+        });
+        throw error;
+    }
+}
+
 export async function openField(page, fieldId) {
     const panel = page.locator(`#collapse${fieldId}`);
     const parent = await panel.getAttribute('data-bs-parent');
@@ -101,7 +182,7 @@ export async function openField(page, fieldId) {
     await expect(page.locator(parent)).toHaveCount(1);
     await expect(page.locator(parent).locator(`#collapse${fieldId}`)).toHaveCount(1);
     const button = page.locator(`[data-bs-target="#collapse${fieldId}"]`);
-    if (await button.getAttribute('aria-expanded') !== 'true') await button.click();
+    if (await button.getAttribute('aria-expanded') !== 'true') await openUi(page, `#collapse${fieldId}`);
     await expect(panel).toHaveClass(/\bshow\b/);
 }
 
