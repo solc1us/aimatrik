@@ -25,8 +25,7 @@
                         <span>MODEL STRUCTURE / 01</span>
                     </div>
 
-                    <img
-                        src="{{ asset('assets/images/logo/asset-model.png') }}"
+                    <img src="{{ asset('assets/images/logo/asset-model.png') }}?v=2"
                         alt="Diagram struktur model AIMATRIK"
                         loading="lazy">
 
